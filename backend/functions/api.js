@@ -70,6 +70,12 @@ app.get('/api/analytics/metrics/daily', memoryAnalyticsController.getDailyMetric
 app.get('/api/analytics/pages/top', memoryAnalyticsController.getTopPages);
 app.get('/api/analytics/stats', memoryAnalyticsController.getStats);
 
+// Additional analytics endpoints for geolocation and device data
+app.get('/api/analytics/geolocation', memoryAnalyticsController.getGeolocation);
+app.get('/api/analytics/devices/breakdown', memoryAnalyticsController.getDeviceBreakdown);
+app.get('/api/analytics/browsers/breakdown', memoryAnalyticsController.getBrowserBreakdown);
+app.get('/api/analytics/os/breakdown', memoryAnalyticsController.getOSBreakdown);
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({

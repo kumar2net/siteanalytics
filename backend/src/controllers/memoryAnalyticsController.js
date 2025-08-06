@@ -125,6 +125,102 @@ class MemoryAnalyticsController {
       });
     }
   }
+
+  // Get geolocation data
+  async getGeolocation(req, res) {
+    try {
+      const { start_date, end_date, limit = 20 } = req.query;
+      
+      const geolocation = memoryStorage.getGeolocation(start_date, end_date, parseInt(limit));
+      
+      res.json({
+        success: true,
+        data: {
+          geolocation
+        }
+      });
+    } catch (error) {
+      console.error('Error in getGeolocation:', error);
+      res.status(500).json({
+        error: {
+          message: 'Failed to retrieve geolocation data',
+          details: error.message
+        }
+      });
+    }
+  }
+
+  // Get device breakdown
+  async getDeviceBreakdown(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      
+      const deviceTypes = memoryStorage.getDeviceBreakdown(start_date, end_date);
+      
+      res.json({
+        success: true,
+        data: {
+          device_types: deviceTypes
+        }
+      });
+    } catch (error) {
+      console.error('Error in getDeviceBreakdown:', error);
+      res.status(500).json({
+        error: {
+          message: 'Failed to retrieve device breakdown',
+          details: error.message
+        }
+      });
+    }
+  }
+
+  // Get browser breakdown
+  async getBrowserBreakdown(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      
+      const browsers = memoryStorage.getBrowserBreakdown(start_date, end_date);
+      
+      res.json({
+        success: true,
+        data: {
+          browsers
+        }
+      });
+    } catch (error) {
+      console.error('Error in getBrowserBreakdown:', error);
+      res.status(500).json({
+        error: {
+          message: 'Failed to retrieve browser breakdown',
+          details: error.message
+        }
+      });
+    }
+  }
+
+  // Get OS breakdown
+  async getOSBreakdown(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      
+      const operatingSystems = memoryStorage.getOSBreakdown(start_date, end_date);
+      
+      res.json({
+        success: true,
+        data: {
+          operating_systems: operatingSystems
+        }
+      });
+    } catch (error) {
+      console.error('Error in getOSBreakdown:', error);
+      res.status(500).json({
+        error: {
+          message: 'Failed to retrieve OS breakdown',
+          details: error.message
+        }
+      });
+    }
+  }
 }
 
 module.exports = new MemoryAnalyticsController(); 

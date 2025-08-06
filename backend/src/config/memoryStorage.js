@@ -118,6 +118,51 @@ class MemoryStorage {
       total_sessions: this.sessions.size
     };
   }
+
+  // Get geolocation data (placeholder - returns empty array for now)
+  getGeolocation(startDate, endDate, limit = 20) {
+    // For now, return empty array since we don't have geolocation data in memory storage
+    return [];
+  }
+
+  // Get device breakdown (placeholder - returns default data)
+  getDeviceBreakdown(startDate, endDate) {
+    // Return default device breakdown
+    return [
+      {
+        device_type: 'Unknown',
+        unique_visitors: this.visitors.size.toString(),
+        page_views: this.pageVisits.length.toString(),
+        percentage: '100.00'
+      }
+    ];
+  }
+
+  // Get browser breakdown (placeholder - returns default data)
+  getBrowserBreakdown(startDate, endDate) {
+    // Return default browser breakdown
+    return [
+      {
+        browser: 'Unknown',
+        unique_visitors: this.visitors.size.toString(),
+        page_views: this.pageVisits.length.toString(),
+        percentage: '100.00'
+      }
+    ];
+  }
+
+  // Get OS breakdown (placeholder - returns default data)
+  getOSBreakdown(startDate, endDate) {
+    // Return default OS breakdown
+    return [
+      {
+        operating_system: 'Unknown',
+        unique_visitors: this.visitors.size.toString(),
+        page_views: this.pageVisits.length.toString(),
+        percentage: '100.00'
+      }
+    ];
+  }
 }
 
 // Create singleton instance
