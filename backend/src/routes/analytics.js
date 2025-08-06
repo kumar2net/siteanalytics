@@ -31,4 +31,13 @@ router.post('/metrics/calculate', analyticsController.calculateDailyMetrics);
 // Generate visitor and session IDs
 router.get('/ids', analyticsController.generateIds);
 
+// Geolocation analytics
+router.get('/geolocation', analyticsController.getVisitorsByGeolocation);
+
+// Device and technology analytics
+router.get('/devices', analyticsController.getVisitorsByDevice);
+router.get('/devices/breakdown', analyticsController.getDeviceTypeBreakdown);
+router.get('/browsers/breakdown', analyticsController.getBrowserBreakdown);
+router.get('/os/breakdown', analyticsController.getOSBreakdown);
+
 module.exports = router; 

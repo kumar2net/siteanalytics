@@ -55,6 +55,75 @@ export const analyticsApi = {
     };
   },
 
+  // Geolocation analytics
+  getVisitorsByGeolocation: async (days: number = 30): Promise<Array<{ country: string; region: string; city: string; visitors: number }>> => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const response = await backendApi.get(`/analytics/geolocation?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}&limit=20`);
+    return response.data.data.geolocation.map((item: any) => ({
+      country: item.country || 'Unknown',
+      region: item.region || 'Unknown',
+      city: item.city || 'Unknown',
+      visitors: parseInt(item.unique_visitors) || 0
+    }));
+  },
+
+  // Device analytics
+  getVisitorsByDevice: async (days: number = 30): Promise<Array<{ device_type: string; browser: string; os: string; visitors: number }>> => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const response = await backendApi.get(`/analytics/devices?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}&limit=20`);
+    return response.data.data.devices.map((item: any) => ({
+      device_type: item.device_type || 'Unknown',
+      browser: item.browser || 'Unknown',
+      os: item.operating_system || 'Unknown',
+      visitors: parseInt(item.visitors)
+    }));
+  },
+
+  getDeviceTypeBreakdown: async (days: number = 30): Promise<Array<{ device_type: string; visitors: number; percentage: number }>> => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const response = await backendApi.get(`/analytics/devices/breakdown?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`);
+    return response.data.data.device_types.map((item: any) => ({
+      device_type: item.device_type || 'Unknown',
+      visitors: parseInt(item.unique_visitors) || 0,
+      percentage: parseFloat(item.percentage) || 0
+    }));
+  },
+
+  getBrowserBreakdown: async (days: number = 30): Promise<Array<{ browser: string; visitors: number; percentage: number }>> => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const response = await backendApi.get(`/analytics/browsers/breakdown?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`);
+    return response.data.data.browsers.map((item: any) => ({
+      browser: item.browser || 'Unknown',
+      visitors: parseInt(item.unique_visitors) || 0,
+      percentage: parseFloat(item.percentage) || 0
+    }));
+  },
+
+  getOSBreakdown: async (days: number = 30): Promise<Array<{ os: string; visitors: number; percentage: number }>> => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const response = await backendApi.get(`/analytics/os/breakdown?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`);
+    return response.data.data.operating_systems.map((item: any) => ({
+      os: item.operating_system || 'Unknown',
+      visitors: parseInt(item.unique_visitors) || 0,
+      percentage: parseFloat(item.percentage) || 0
+    }));
+  },
+
   // Predictions
   getPredictions: async (days: number = 7): Promise<Prediction[]> => {
     const response = await mlApi.get(`/predict/page-visits?days=${days}`);

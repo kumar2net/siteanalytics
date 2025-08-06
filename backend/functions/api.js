@@ -3,16 +3,15 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
+const serverless = require('serverless-http');
 require('dotenv').config();
 
-const { errorHandler } = require('./middleware/errorHandler');
-const { rateLimiter } = require('./middleware/rateLimiter');
-const analyticsRoutes = require('./routes/analytics');
-const healthRoutes = require('./routes/health');
-const { initializeDatabase } = require('./config/database');
+const { errorHandler } = require('../src/middleware/errorHandler');
+const { rateLimiter } = require('../src/middleware/rateLimiter');
+const { healthCheck } = require('../src/controllers/healthController');
+const memoryAnalyticsController = require('../src/controllers/memoryAnalyticsController');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 // Security middleware with CSP configuration
 app.use(helmet({
@@ -32,12 +31,13 @@ app.use(helmet({
   },
 }));
 
-// CORS configuration
+// CORS configuration for production
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'http://localhost:5173', // Personal website
-    'http://localhost:3000'  // Original analytics frontend
+    'https://kumarsite.netlify.app',
+    'https://kumar2net.github.io',
+    'http://localhost:5173',
+    'http://localhost:3000'
   ],
   credentials: true
 }));
@@ -45,9 +45,6 @@ app.use(cors({
 // Request parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Serve static files (tracking script and demo)
-app.use('/shared', express.static('../shared'));
 
 // Compression
 app.use(compression());
@@ -58,16 +55,24 @@ app.use(morgan('combined'));
 // Rate limiting
 app.use(rateLimiter);
 
-// Routes
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/health', healthRoutes);
+// Health check routes
+app.get('/health', healthCheck);
+app.get('/api/health', healthCheck);
+
+// Analytics routes using memory storage
+app.post('/api/analytics/track', memoryAnalyticsController.trackPageVisit);
+app.get('/api/analytics/metrics/realtime', memoryAnalyticsController.getRealTimeMetrics);
+app.get('/api/analytics/metrics/daily', memoryAnalyticsController.getDailyMetrics);
+app.get('/api/analytics/pages/top', memoryAnalyticsController.getTopPages);
+app.get('/api/analytics/stats', memoryAnalyticsController.getStats);
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     message: 'Website Analytics API',
     version: '1.0.0',
-    status: 'running'
+    status: 'running',
+    environment: 'production'
   });
 });
 
@@ -82,23 +87,5 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Initialize database and start server
-async function startServer() {
-  try {
-    await initializeDatabase();
-    
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📊 Analytics API: http://localhost:${PORT}`);
-      console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
-      console.log(`📝 Demo page: http://localhost:${PORT}/shared/demo-geolocation-device.html`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-  }
-}
-
-startServer();
-
-module.exports = app; 
+// Export the serverless handler
+module.exports.handler = serverless(app); 

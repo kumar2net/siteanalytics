@@ -1,4 +1,5 @@
 const analyticsService = require('../services/analyticsService');
+const DeviceParser = require('../utils/deviceParser');
 
 class AnalyticsController {
   // Track page visit or event
@@ -8,6 +9,38 @@ class AnalyticsController {
       
       // Add IP address from request
       data.ip_address = req.ip || req.connection.remoteAddress;
+      
+      // Parse device information from user agent if not provided
+      if (data.user_agent && (!data.device_type || !data.browser)) {
+        const deviceInfo = DeviceParser.parseUserAgent(data.user_agent);
+        
+        // Only override if not already provided
+        if (!data.device_type) data.device_type = deviceInfo.device_type;
+        if (!data.browser) data.browser = deviceInfo.browser;
+        if (!data.browser_version) data.browser_version = deviceInfo.browser_version;
+        if (!data.operating_system) data.operating_system = deviceInfo.operating_system;
+        if (!data.os_version) data.os_version = deviceInfo.os_version;
+      }
+      
+      // Parse screen resolution if provided
+      if (data.screen_resolution && typeof data.screen_resolution === 'object') {
+        data.screen_resolution = DeviceParser.parseScreenResolution(data.screen_resolution);
+      }
+      
+      // Validate geolocation data
+      if (data.country || data.region || data.city || data.latitude || data.longitude) {
+        const validatedGeo = DeviceParser.validateGeolocation({
+          country: data.country,
+          region: data.region,
+          city: data.city,
+          latitude: data.latitude,
+          longitude: data.longitude
+        });
+        
+        if (validatedGeo) {
+          Object.assign(data, validatedGeo);
+        }
+      }
       
       // Check if this is an event or page visit
       const isEvent = data.event_name && data.event_data;
@@ -226,6 +259,203 @@ class AnalyticsController {
       res.status(500).json({
         error: {
           message: 'Failed to generate IDs',
+          details: error.message
+        }
+      });
+    }
+  }
+
+  // Get visitors by geolocation
+  async getVisitorsByGeolocation(req, res) {
+    try {
+      const { start_date, end_date, limit = 20 } = req.query;
+      
+      if (!start_date || !end_date) {
+        return res.status(400).json({
+          error: {
+            message: 'start_date and end_date are required'
+          }
+        });
+      }
+      
+      const geolocationData = await analyticsService.getVisitorsByGeolocation(
+        new Date(start_date), 
+        new Date(end_date), 
+        parseInt(limit)
+      );
+      
+      res.json({
+        success: true,
+        data: {
+          geolocation: geolocationData,
+          period: {
+            start_date,
+            end_date
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error in getVisitorsByGeolocation:', error);
+      res.status(500).json({
+        error: {
+          message: 'Failed to retrieve geolocation data',
+          details: error.message
+        }
+      });
+    }
+  }
+
+  // Get visitors by device type and technology
+  async getVisitorsByDevice(req, res) {
+    try {
+      const { start_date, end_date, limit = 20 } = req.query;
+      
+      if (!start_date || !end_date) {
+        return res.status(400).json({
+          error: {
+            message: 'start_date and end_date are required'
+          }
+        });
+      }
+      
+      const deviceData = await analyticsService.getVisitorsByDevice(
+        new Date(start_date), 
+        new Date(end_date), 
+        parseInt(limit)
+      );
+      
+      res.json({
+        success: true,
+        data: {
+          devices: deviceData,
+          period: {
+            start_date,
+            end_date
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error in getVisitorsByDevice:', error);
+      res.status(500).json({
+        error: {
+          message: 'Failed to retrieve device data',
+          details: error.message
+        }
+      });
+    }
+  }
+
+  // Get device type breakdown
+  async getDeviceTypeBreakdown(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      
+      if (!start_date || !end_date) {
+        return res.status(400).json({
+          error: {
+            message: 'start_date and end_date are required'
+          }
+        });
+      }
+      
+      const breakdown = await analyticsService.getDeviceTypeBreakdown(
+        new Date(start_date), 
+        new Date(end_date)
+      );
+      
+      res.json({
+        success: true,
+        data: {
+          device_types: breakdown,
+          period: {
+            start_date,
+            end_date
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error in getDeviceTypeBreakdown:', error);
+      res.status(500).json({
+        error: {
+          message: 'Failed to retrieve device type breakdown',
+          details: error.message
+        }
+      });
+    }
+  }
+
+  // Get browser breakdown
+  async getBrowserBreakdown(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      
+      if (!start_date || !end_date) {
+        return res.status(400).json({
+          error: {
+            message: 'start_date and end_date are required'
+          }
+        });
+      }
+      
+      const breakdown = await analyticsService.getBrowserBreakdown(
+        new Date(start_date), 
+        new Date(end_date)
+      );
+      
+      res.json({
+        success: true,
+        data: {
+          browsers: breakdown,
+          period: {
+            start_date,
+            end_date
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error in getBrowserBreakdown:', error);
+      res.status(500).json({
+        error: {
+          message: 'Failed to retrieve browser breakdown',
+          details: error.message
+        }
+      });
+    }
+  }
+
+  // Get operating system breakdown
+  async getOSBreakdown(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      
+      if (!start_date || !end_date) {
+        return res.status(400).json({
+          error: {
+            message: 'start_date and end_date are required'
+          }
+        });
+      }
+      
+      const breakdown = await analyticsService.getOSBreakdown(
+        new Date(start_date), 
+        new Date(end_date)
+      );
+      
+      res.json({
+        success: true,
+        data: {
+          operating_systems: breakdown,
+          period: {
+            start_date,
+            end_date
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error in getOSBreakdown:', error);
+      res.status(500).json({
+        error: {
+          message: 'Failed to retrieve OS breakdown',
           details: error.message
         }
       });

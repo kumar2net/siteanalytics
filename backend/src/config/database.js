@@ -37,6 +37,19 @@ const initializeDatabase = async () => {
         referrer VARCHAR(500),
         user_agent TEXT,
         ip_address INET,
+        event_name VARCHAR(100),
+        event_data JSONB,
+        country VARCHAR(100),
+        region VARCHAR(100),
+        city VARCHAR(100),
+        latitude DECIMAL(10, 8),
+        longitude DECIMAL(11, 8),
+        device_type VARCHAR(50),
+        browser VARCHAR(100),
+        browser_version VARCHAR(50),
+        operating_system VARCHAR(100),
+        os_version VARCHAR(50),
+        screen_resolution VARCHAR(20),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -74,6 +87,10 @@ const initializeDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_page_visits_timestamp ON page_visits(timestamp);
       CREATE INDEX IF NOT EXISTS idx_page_visits_visitor_id ON page_visits(visitor_id);
       CREATE INDEX IF NOT EXISTS idx_page_visits_session_id ON page_visits(session_id);
+      CREATE INDEX IF NOT EXISTS idx_page_visits_country ON page_visits(country);
+      CREATE INDEX IF NOT EXISTS idx_page_visits_device_type ON page_visits(device_type);
+      CREATE INDEX IF NOT EXISTS idx_page_visits_browser ON page_visits(browser);
+      CREATE INDEX IF NOT EXISTS idx_page_visits_os ON page_visits(operating_system);
       CREATE INDEX IF NOT EXISTS idx_daily_metrics_date ON daily_metrics(date);
       CREATE INDEX IF NOT EXISTS idx_predictions_date ON predictions(predicted_date);
     `);

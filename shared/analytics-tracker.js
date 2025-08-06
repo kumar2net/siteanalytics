@@ -76,6 +76,95 @@
       return window.location.href;
     },
 
+    getDeviceInfo: function() {
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      
+      // Basic device type detection
+      let deviceType = 'desktop';
+      if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
+        deviceType = /iPad/i.test(userAgent) ? 'tablet' : 'mobile';
+      }
+      
+      // Basic browser detection
+      let browser = 'Unknown';
+      let browserVersion = '';
+      if (userAgent.includes('Chrome')) {
+        browser = 'Chrome';
+        browserVersion = userAgent.match(/Chrome\/(\d+)/)?.[1] || '';
+      } else if (userAgent.includes('Firefox')) {
+        browser = 'Firefox';
+        browserVersion = userAgent.match(/Firefox\/(\d+)/)?.[1] || '';
+      } else if (userAgent.includes('Safari')) {
+        browser = 'Safari';
+        browserVersion = userAgent.match(/Version\/(\d+)/)?.[1] || '';
+      } else if (userAgent.includes('Edge')) {
+        browser = 'Edge';
+        browserVersion = userAgent.match(/Edge\/(\d+)/)?.[1] || '';
+      }
+      
+      // Basic OS detection
+      let operatingSystem = 'Unknown';
+      let osVersion = '';
+      if (userAgent.includes('Windows')) {
+        operatingSystem = 'Windows';
+        osVersion = userAgent.match(/Windows NT (\d+\.\d+)/)?.[1] || '';
+      } else if (userAgent.includes('Mac OS X')) {
+        operatingSystem = 'macOS';
+        osVersion = userAgent.match(/Mac OS X (\d+_\d+)/)?.[1]?.replace('_', '.') || '';
+      } else if (userAgent.includes('Android')) {
+        operatingSystem = 'Android';
+        osVersion = userAgent.match(/Android (\d+\.\d+)/)?.[1] || '';
+      } else if (userAgent.includes('iOS')) {
+        operatingSystem = 'iOS';
+        osVersion = userAgent.match(/OS (\d+_\d+)/)?.[1]?.replace('_', '.') || '';
+      } else if (userAgent.includes('Linux')) {
+        operatingSystem = 'Linux';
+      }
+      
+      return {
+        device_type: deviceType,
+        browser: browser,
+        browser_version: browserVersion,
+        operating_system: operatingSystem,
+        os_version: osVersion
+      };
+    },
+
+    getScreenResolution: function() {
+      return {
+        width: screen.width,
+        height: screen.height
+      };
+    },
+
+    getGeolocation: function() {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve(null);
+          return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+          },
+          (error) => {
+            utils.log('Geolocation error:', error.message);
+            resolve(null);
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: 60000
+          }
+        );
+      });
+    },
+
     isNewSession: function() {
       const sessionStart = utils.getStorage(STORAGE_KEYS.SESSION_START);
       if (!sessionStart) return true;
@@ -123,6 +212,10 @@
       const timeOnPage = config.trackTimeOnPage ? 
         Math.floor((Date.now() - this.pageStartTime) / 1000) : 0;
 
+      // Get device information
+      const deviceInfo = utils.getDeviceInfo();
+      const screenResolution = utils.getScreenResolution();
+
       const data = {
         page_url: utils.getPageUrl(),
         visitor_id: config.visitorId,
@@ -130,6 +223,8 @@
         time_on_page: timeOnPage,
         referrer: utils.getReferrer(),
         user_agent: utils.getUserAgent(),
+        screen_resolution: screenResolution,
+        ...deviceInfo,
         ...customData
       };
 
@@ -264,6 +359,16 @@
 
     trackEvent: function(eventName, eventData) {
       tracker.trackEvent(eventName, eventData);
+    },
+
+    trackWithGeolocation: function(customData = {}) {
+      utils.getGeolocation().then(geoData => {
+        if (geoData) {
+          customData.latitude = geoData.latitude;
+          customData.longitude = geoData.longitude;
+        }
+        tracker.trackPageView(customData);
+      });
     },
 
     getVisitorId: function() {

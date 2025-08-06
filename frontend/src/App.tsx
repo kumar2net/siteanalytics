@@ -2,6 +2,8 @@ import React from 'react';
 import DashboardLayout from './components/layout/DashboardLayout';
 import RealtimeMetrics from './components/dashboard/RealtimeMetrics';
 import HistoricalTrendsChart from './components/charts/HistoricalTrendsChart';
+import GeolocationChart from './components/charts/GeolocationChart';
+import DeviceTechnologyChart from './components/charts/DeviceTechnologyChart';
 import './App.css';
 
 function App() {
@@ -26,6 +28,18 @@ function App() {
         <div className="section">
           <h3 className="section-title">Historical Trends</h3>
           <HistoricalTrendsChart days={30} />
+        </div>
+
+        {/* Geolocation Analytics */}
+        <div className="section">
+          <h3 className="section-title">Visitors by Geolocation</h3>
+          <GeolocationChart days={30} />
+        </div>
+
+        {/* Device Type & Technology */}
+        <div className="section">
+          <h3 className="section-title">Device Type & Technology</h3>
+          <DeviceTechnologyChart days={30} />
         </div>
 
         {/* System Status */}

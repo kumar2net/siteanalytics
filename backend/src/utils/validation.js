@@ -11,7 +11,20 @@ const pageVisitSchema = Joi.object({
   ip_address: Joi.string().ip().optional(),
   // Event tracking fields (optional)
   event_name: Joi.string().max(100).optional(),
-  event_data: Joi.object().optional()
+  event_data: Joi.object().optional(),
+  // Geolocation fields (optional)
+  country: Joi.string().max(100).optional(),
+  region: Joi.string().max(100).optional(),
+  city: Joi.string().max(100).optional(),
+  latitude: Joi.number().min(-90).max(90).optional(),
+  longitude: Joi.number().min(-180).max(180).optional(),
+  // Device and technology fields (optional)
+  device_type: Joi.string().valid('desktop', 'mobile', 'tablet', 'other').optional(),
+  browser: Joi.string().max(100).optional(),
+  browser_version: Joi.string().max(50).optional(),
+  operating_system: Joi.string().max(100).optional(),
+  os_version: Joi.string().max(50).optional(),
+  screen_resolution: Joi.string().max(20).optional()
 });
 
 // Analytics query schema

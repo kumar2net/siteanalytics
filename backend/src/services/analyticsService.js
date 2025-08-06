@@ -4,15 +4,28 @@ const { v4: uuidv4 } = require('uuid');
 class AnalyticsService {
   // Track a page visit or event
   async trackPageVisit(data) {
-    const { page_url, visitor_id, session_id, time_on_page, referrer, user_agent, ip_address, event_name, event_data } = data;
+    const { 
+      page_url, visitor_id, session_id, time_on_page, referrer, user_agent, ip_address, 
+      event_name, event_data, country, region, city, latitude, longitude,
+      device_type, browser, browser_version, operating_system, os_version, screen_resolution 
+    } = data;
     
     const query = `
-      INSERT INTO page_visits (page_url, visitor_id, session_id, time_on_page, referrer, user_agent, ip_address, event_name, event_data)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO page_visits (
+        page_url, visitor_id, session_id, time_on_page, referrer, user_agent, ip_address, 
+        event_name, event_data, country, region, city, latitude, longitude,
+        device_type, browser, browser_version, operating_system, os_version, screen_resolution
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
       RETURNING id, timestamp
     `;
     
-    const values = [page_url, visitor_id, session_id, time_on_page, referrer, user_agent, ip_address, event_name || null, event_data || null];
+    const values = [
+      page_url, visitor_id, session_id, time_on_page, referrer, user_agent, ip_address, 
+      event_name || null, event_data || null, country || null, region || null, city || null, 
+      latitude || null, longitude || null, device_type || null, browser || null, 
+      browser_version || null, operating_system || null, os_version || null, screen_resolution || null
+    ];
     
     try {
       const result = await pool.query(query, values);
@@ -213,6 +226,136 @@ class AnalyticsService {
   // Generate session ID
   generateSessionId() {
     return uuidv4();
+  }
+
+  // Get visitors by geolocation
+  async getVisitorsByGeolocation(startDate, endDate, limit = 20) {
+    const query = `
+      SELECT 
+        country,
+        region,
+        city,
+        latitude,
+        longitude,
+        COUNT(DISTINCT visitor_id) as unique_visitors,
+        COUNT(*) as page_views,
+        AVG(time_on_page) as avg_time_on_page
+      FROM page_visits 
+      WHERE timestamp >= $1 AND timestamp <= $2
+        AND country IS NOT NULL
+      GROUP BY country, region, city, latitude, longitude
+      ORDER BY unique_visitors DESC
+      LIMIT $3
+    `;
+    
+    try {
+      const result = await pool.query(query, [startDate, endDate, limit]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting visitors by geolocation:', error);
+      throw error;
+    }
+  }
+
+  // Get visitors by device type and technology
+  async getVisitorsByDevice(startDate, endDate, limit = 20) {
+    const query = `
+      SELECT 
+        device_type,
+        browser,
+        browser_version,
+        operating_system,
+        os_version,
+        COUNT(DISTINCT visitor_id) as unique_visitors,
+        COUNT(*) as page_views,
+        AVG(time_on_page) as avg_time_on_page
+      FROM page_visits 
+      WHERE timestamp >= $1 AND timestamp <= $2
+        AND device_type IS NOT NULL
+      GROUP BY device_type, browser, browser_version, operating_system, os_version
+      ORDER BY unique_visitors DESC
+      LIMIT $3
+    `;
+    
+    try {
+      const result = await pool.query(query, [startDate, endDate, limit]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting visitors by device:', error);
+      throw error;
+    }
+  }
+
+  // Get device type breakdown
+  async getDeviceTypeBreakdown(startDate, endDate) {
+    const query = `
+      SELECT 
+        COALESCE(device_type, 'Unknown') as device_type,
+        COUNT(DISTINCT visitor_id) as unique_visitors,
+        COUNT(*) as page_views,
+        ROUND(((COUNT(DISTINCT visitor_id)::FLOAT / 
+          (SELECT COUNT(DISTINCT visitor_id) FROM page_visits WHERE timestamp >= $1 AND timestamp <= $2)::FLOAT) * 100)::NUMERIC, 2) as percentage
+      FROM page_visits 
+      WHERE timestamp >= $1 AND timestamp <= $2
+      GROUP BY device_type
+      ORDER BY unique_visitors DESC
+    `;
+    
+    try {
+      const result = await pool.query(query, [startDate, endDate]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting device type breakdown:', error);
+      throw error;
+    }
+  }
+
+  // Get browser breakdown
+  async getBrowserBreakdown(startDate, endDate) {
+    const query = `
+      SELECT 
+        COALESCE(browser, 'Unknown') as browser,
+        COUNT(DISTINCT visitor_id) as unique_visitors,
+        COUNT(*) as page_views,
+        ROUND(((COUNT(DISTINCT visitor_id)::FLOAT / 
+          (SELECT COUNT(DISTINCT visitor_id) FROM page_visits WHERE timestamp >= $1 AND timestamp <= $2)::FLOAT) * 100)::NUMERIC, 2) as percentage
+      FROM page_visits 
+      WHERE timestamp >= $1 AND timestamp <= $2
+      GROUP BY browser
+      ORDER BY unique_visitors DESC
+    `;
+    
+    try {
+      const result = await pool.query(query, [startDate, endDate]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting browser breakdown:', error);
+      throw error;
+    }
+  }
+
+  // Get operating system breakdown
+  async getOSBreakdown(startDate, endDate) {
+    const query = `
+      SELECT 
+        COALESCE(operating_system, 'Unknown') as operating_system,
+        COUNT(DISTINCT visitor_id) as unique_visitors,
+        COUNT(*) as page_views,
+        ROUND(((COUNT(DISTINCT visitor_id)::FLOAT / 
+          (SELECT COUNT(DISTINCT visitor_id) FROM page_visits WHERE timestamp >= $1 AND timestamp <= $2)::FLOAT) * 100)::NUMERIC, 2) as percentage
+      FROM page_visits 
+      WHERE timestamp >= $1 AND timestamp <= $2
+      GROUP BY operating_system
+      ORDER BY unique_visitors DESC
+    `;
+    
+    try {
+      const result = await pool.query(query, [startDate, endDate]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting OS breakdown:', error);
+      throw error;
+    }
   }
 }
 
