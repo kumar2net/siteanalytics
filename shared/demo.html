@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Analytics Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        #log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Website Analytics Demo</h1>
+    
+    <div class="container">
+        <h2>Tracking Script Test</h2>
+        <p>This page demonstrates the SiteAnalytics tracking script functionality.</p>
+        
+        <div class="info">
+            <strong>Current Configuration:</strong><br>
+            API Endpoint: <span id="apiEndpoint">Not configured</span><br>
+            Visitor ID: <span id="visitorId">Not available</span><br>
+            Session ID: <span id="sessionId">Not available</span>
+        </div>
+        
+        <div>
+            <label for="apiUrl">API Endpoint:</label>
+            <input type="text" id="apiUrl" placeholder="http://localhost:3001" style="width: 300px; padding: 5px;">
+            <button class="button" onclick="initializeTracker()">Initialize Tracker</button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button class="button" onclick="trackPageView()">Track Page View</button>
+            <button class="button" onclick="trackCustomEvent()">Track Custom Event</button>
+            <button class="button" onclick="getIds()">Get IDs</button>
+            <button class="button" onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h3>Event Log</h3>
+        <div id="log"></div>
+    </div>
+    
+    <div class="container">
+        <h3>Test Links</h3>
+        <p>Click these links to test navigation tracking:</p>
+        <a href="#section1" class="button">Section 1</a>
+        <a href="#section2" class="button">Section 2</a>
+        <a href="?param=test" class="button">Add Query Param</a>
+    </div>
+    
+    <div id="section1" class="container">
+        <h3>Section 1</h3>
+        <p>This is section 1 content. Navigation to this section should be tracked.</p>
+    </div>
+    
+    <div id="section2" class="container">
+        <h3>Section 2</h3>
+        <p>This is section 2 content. Navigation to this section should be tracked.</p>
+    </div>
+
+    <!-- Include the analytics tracker script -->
+    <script src="analytics-tracker.js"></script>
+    
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function updateInfo() {
+            if (window.SiteAnalytics) {
+                document.getElementById('visitorId').textContent = window.SiteAnalytics.getVisitorId() || 'Not available';
+                document.getElementById('sessionId').textContent = window.SiteAnalytics.getSessionId() || 'Not available';
+            }
+        }
+
+        function initializeTracker() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            if (!apiUrl) {
+                log('Please enter an API endpoint URL', 'error');
+                return;
+            }
+
+            try {
+                window.SiteAnalytics.init(apiUrl, {
+                    debug: true,
+                    autoTrack: true
+                });
+                
+                document.getElementById('apiEndpoint').textContent = apiUrl;
+                updateInfo();
+                log('Tracker initialized successfully', 'success');
+            } catch (error) {
+                log('Failed to initialize tracker: ' + error.message, 'error');
+            }
+        }
+
+        function trackPageView() {
+            if (!window.SiteAnalytics) {
+                log('Tracker not initialized. Please initialize first.', 'error');
+                return;
+            }
+
+            try {
+                window.SiteAnalytics.track({
+                    custom_data: 'Manual page view tracking'
+                });
+                log('Page view tracked manually', 'success');
+            } catch (error) {
+                log('Failed to track page view: ' + error.message, 'error');
+            }
+        }
+
+        function trackCustomEvent() {
+            if (!window.SiteAnalytics) {
+                log('Tracker not initialized. Please initialize first.', 'error');
+                return;
+            }
+
+            try {
+                window.SiteAnalytics.trackEvent('button_click', {
+                    button_name: 'custom_event_button',
+                    timestamp: new Date().toISOString()
+                });
+                log('Custom event tracked: button_click', 'success');
+            } catch (error) {
+                log('Failed to track custom event: ' + error.message, 'error');
+            }
+        }
+
+        function getIds() {
+            if (!window.SiteAnalytics) {
+                log('Tracker not initialized. Please initialize first.', 'error');
+                return;
+            }
+
+            const visitorId = window.SiteAnalytics.getVisitorId();
+            const sessionId = window.SiteAnalytics.getSessionId();
+            
+            log(`Visitor ID: ${visitorId}`, 'info');
+            log(`Session ID: ${sessionId}`, 'info');
+            updateInfo();
+        }
+
+        // Auto-initialize if URL parameter is provided
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoApiUrl = urlParams.get('api');
+        if (autoApiUrl) {
+            document.getElementById('apiUrl').value = autoApiUrl;
+            setTimeout(() => {
+                initializeTracker();
+            }, 1000);
+        }
+
+        // Log page load
+        log('Demo page loaded. Initialize tracker to start testing.', 'info');
+    </script>
+</body>
+</html> 

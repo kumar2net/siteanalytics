@@ -1,551 +1,418 @@
-# Analytics MVP API Documentation
+# API Documentation
 
-**Created**: August 5, 2025  
-**Last Updated**: August 5, 2025  
-**Version**: 1.0
+## Overview
 
-## API Overview
+The Website Analytics API provides comprehensive tracking and analytics capabilities for websites. It supports both page visit tracking and custom event tracking.
 
-### Base URL
+**Base URL**: `http://localhost:3001/api`
+
+## Authentication
+
+Currently, the API does not require authentication for development purposes. In production, consider implementing API key authentication.
+
+## Endpoints
+
+### 1. Health Check
+
+**GET** `/health`
+
+Check the health status of the API and database.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-08-06T01:44:52.578Z",
+  "services": {
+    "database": "connected",
+    "database_timestamp": "2025-08-06T01:44:52.578Z"
+  },
+  "uptime": 123.456,
+  "memory": {
+    "rss": 72122368,
+    "heapTotal": 20971520,
+    "heapUsed": 12037664
+  }
+}
 ```
-Development: http://localhost:8000/api
-Production: https://api.analytics-mvp.com/api
-```
 
-### Authentication
-All API endpoints require JWT authentication except for data collection endpoints.
+### 2. Track Page Visit or Event
 
-```http
-Authorization: Bearer <jwt_token>
-```
+**POST** `/analytics/track`
 
-### Rate Limiting
-- **Data Collection**: 100 requests/minute per IP
-- **Analytics**: 1000 requests/minute per user
-- **Predictions**: 100 requests/minute per user
+Track a page visit or custom event.
 
-## Data Collection Endpoints
-
-### Track Page Visit
-Records a page visit with analytics data.
-
-```http
-POST /api/track
-Content-Type: application/json
-```
-
-#### Request Body
+**Request Body:**
 ```json
 {
   "page_url": "https://example.com/page",
-  "visitor_id": "visitor_123",
-  "session_id": "session_456",
-  "time_on_page": 120,
+  "visitor_id": "uuid-string",
+  "session_id": "uuid-string",
+  "time_on_page": 30,
   "referrer": "https://google.com",
-  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-  "device_type": "desktop",
-  "browser": "Chrome",
-  "os": "Windows",
-  "screen_resolution": "1920x1080",
-  "language": "en-US"
-}
-```
-
-#### Required Fields
-- `page_url`: The URL of the visited page
-- `visitor_id`: Unique identifier for the visitor
-- `session_id`: Unique identifier for the session
-
-#### Optional Fields
-- `time_on_page`: Time spent on page in seconds
-- `referrer`: Referring URL
-- `user_agent`: Browser user agent string
-- `device_type`: Device type (desktop, mobile, tablet)
-- `browser`: Browser name
-- `os`: Operating system
-- `screen_resolution`: Screen resolution
-- `language`: Browser language
-
-#### Response
-```http
-HTTP/1.1 201 Created
-Content-Type: application/json
-
-{
-  "success": true,
-  "message": "Page visit tracked successfully",
-  "data": {
-    "id": 12345,
-    "timestamp": "2025-08-05T16:30:23Z"
+  "user_agent": "Mozilla/5.0...",
+  "event_name": "button_click",        // Optional - for events only
+  "event_data": {                      // Optional - for events only
+    "button_name": "cta_button",
+    "location": "hero_section"
   }
 }
 ```
 
-#### Error Responses
-```http
-HTTP/1.1 400 Bad Request
-Content-Type: application/json
-
-{
-  "success": false,
-  "error": "Validation failed",
-  "details": {
-    "page_url": "Page URL is required"
-  }
-}
-```
-
-## Analytics Endpoints
-
-### Get Daily Metrics
-Retrieves aggregated daily metrics for a date range.
-
-```http
-GET /api/metrics/daily?start_date=2025-08-01&end_date=2025-08-05
-Authorization: Bearer <jwt_token>
-```
-
-#### Query Parameters
-- `start_date` (required): Start date in YYYY-MM-DD format
-- `end_date` (required): End date in YYYY-MM-DD format
-- `metrics` (optional): Comma-separated list of metrics to include
-
-#### Response
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "success": true,
-  "data": [
-    {
-      "date": "2025-08-01",
-      "page_visits": 1250,
-      "page_views": 3200,
-      "unique_visitors": 980,
-      "avg_time_on_page": 145.5,
-      "bounce_rate": 0.35,
-      "avg_session_duration": 420.3
-    },
-    {
-      "date": "2025-08-02",
-      "page_visits": 1320,
-      "page_views": 3450,
-      "unique_visitors": 1050,
-      "avg_time_on_page": 152.1,
-      "bounce_rate": 0.32,
-      "avg_session_duration": 445.7
-    }
-  ],
-  "pagination": {
-    "total": 5,
-    "page": 1,
-    "limit": 10
-  }
-}
-```
-
-### Get Real-time Metrics
-Retrieves current real-time analytics data.
-
-```http
-GET /api/metrics/realtime
-Authorization: Bearer <jwt_token>
-```
-
-#### Response
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
+**Response:**
+```json
 {
   "success": true,
   "data": {
-    "current_visitors": 45,
-    "today_visits": 1250,
-    "today_views": 3200,
-    "avg_time_today": 145.5,
-    "bounce_rate_today": 0.35,
-    "top_pages": [
-      {
-        "url": "/home",
-        "visits": 450,
-        "views": 1200
-      },
-      {
-        "url": "/about",
-        "visits": 320,
-        "views": 850
-      }
-    ]
+    "id": 3511,
+    "timestamp": "2025-08-06T01:44:48.672Z",
+    "message": "Page visit tracked successfully",
+    "type": "page_visit"
   }
 }
 ```
 
-### Get Top Pages
-Retrieves the most visited pages.
-
-```http
-GET /api/metrics/pages?limit=10&period=7d
-Authorization: Bearer <jwt_token>
-```
-
-#### Query Parameters
-- `limit` (optional): Number of pages to return (default: 10)
-- `period` (optional): Time period (1d, 7d, 30d, 90d)
-
-#### Response
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "success": true,
-  "data": [
-    {
-      "url": "/home",
-      "visits": 4500,
-      "views": 12000,
-      "avg_time": 145.5,
-      "bounce_rate": 0.25
-    },
-    {
-      "url": "/about",
-      "visits": 3200,
-      "views": 8500,
-      "avg_time": 180.2,
-      "bounce_rate": 0.15
-    }
-  ]
-}
-```
-
-### Get Traffic Sources
-Retrieves traffic source analytics.
-
-```http
-GET /api/metrics/sources?limit=10&period=7d
-Authorization: Bearer <jwt_token>
-```
-
-#### Response
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "success": true,
-  "data": [
-    {
-      "source": "google",
-      "visits": 2500,
-      "percentage": 0.45,
-      "avg_time": 160.3,
-      "bounce_rate": 0.30
-    },
-    {
-      "source": "direct",
-      "visits": 1800,
-      "percentage": 0.32,
-      "avg_time": 200.1,
-      "bounce_rate": 0.20
-    }
-  ]
-}
-```
-
-## Prediction Endpoints
-
-### Get Page Visit Predictions
-Retrieves LSTM-based predictions for page visits.
-
-```http
-GET /api/predictions/page-visits?days=7
-Authorization: Bearer <jwt_token>
-```
-
-#### Query Parameters
-- `days` (optional): Number of days to predict (default: 7, max: 30)
-
-#### Response
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
+**Event Response:**
+```json
 {
   "success": true,
   "data": {
-    "predictions": [
+    "id": 3510,
+    "timestamp": "2025-08-06T01:44:39.704Z",
+    "message": "Event tracked successfully",
+    "type": "event"
+  }
+}
+```
+
+### 3. Get Real-time Metrics
+
+**GET** `/analytics/metrics/realtime`
+
+Get real-time analytics metrics.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "metrics": {
+      "active_visitors": "1",
+      "page_views_24h": "7",
+      "avg_time_on_page_24h": "5.0000000000000000"
+    },
+    "timestamp": "2025-08-06T01:44:52.578Z"
+  }
+}
+```
+
+### 4. Get Daily Metrics
+
+**GET** `/analytics/metrics/daily`
+
+Get daily metrics for a specified period.
+
+**Query Parameters:**
+- `days` (optional): Number of days to retrieve (1-365, default: 30)
+- `start_date` (optional): Start date in ISO format
+- `end_date` (optional): End date in ISO format
+
+**Example Request:**
+```
+GET /analytics/metrics/daily?days=7
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "metrics": [
       {
-        "date": "2025-08-06",
-        "predicted_visits": 1350,
-        "confidence_interval": 0.85,
-        "lower_bound": 1200,
-        "upper_bound": 1500
-      },
-      {
-        "date": "2025-08-07",
-        "predicted_visits": 1420,
-        "confidence_interval": 0.82,
-        "lower_bound": 1280,
-        "upper_bound": 1560
+        "date": "2025-08-05T18:30:00.000Z",
+        "page_visits": 83,
+        "page_views": 84,
+        "avg_time_on_page": 184.5,
+        "bounce_rate": 0.467,
+        "unique_visitors": 83
       }
     ],
-    "model_info": {
-      "version": "1.2.0",
-      "accuracy": 0.87,
-      "last_trained": "2025-08-05T10:00:00Z",
-      "training_data_points": 90
+    "period": {
+      "start_date": "2025-07-30T01:39:42.807Z",
+      "end_date": "2025-08-06T01:39:42.807Z",
+      "days": 7
     }
   }
 }
 ```
 
-### Get Model Accuracy
-Retrieves current model performance metrics.
+### 5. Get Top Pages
 
-```http
-GET /api/predictions/accuracy
-Authorization: Bearer <jwt_token>
+**GET** `/analytics/pages/top`
+
+Get the most visited pages for a specified period.
+
+**Query Parameters:**
+- `start_date` (required): Start date in ISO format
+- `end_date` (required): End date in ISO format
+- `limit` (optional): Number of pages to return (1-100, default: 10)
+
+**Example Request:**
+```
+GET /analytics/pages/top?start_date=2025-07-30T00:00:00.000Z&end_date=2025-08-06T23:59:59.999Z&limit=5
 ```
 
-#### Response
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
+**Response:**
+```json
 {
   "success": true,
   "data": {
-    "overall_accuracy": 0.87,
-    "mae": 45.2,
-    "rmse": 67.8,
-    "r2_score": 0.82,
-    "recent_predictions": [
+    "pages": [
       {
-        "date": "2025-08-01",
-        "predicted": 1250,
-        "actual": 1280,
-        "error": 30
+        "page_url": "/analytics",
+        "unique_visitors": "5",
+        "page_views": "8",
+        "avg_time_on_page": "12.5"
+      }
+    ],
+    "period": {
+      "start_date": "2025-07-30T00:00:00.000Z",
+      "end_date": "2025-08-06T23:59:59.999Z"
+    }
+  }
+}
+```
+
+### 6. Get Page Visits
+
+**GET** `/analytics/visits`
+
+Get detailed page visit data.
+
+**Query Parameters:**
+- `start_date` (required): Start date in ISO format
+- `end_date` (required): End date in ISO format
+- `page_url` (optional): Filter by specific page URL
+- `limit` (optional): Number of records to return (1-1000, default: 100)
+- `offset` (optional): Number of records to skip (default: 0)
+
+**Example Request:**
+```
+GET /analytics/visits?start_date=2025-08-01T00:00:00.000Z&end_date=2025-08-06T23:59:59.999Z&limit=50
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "visits": [
+      {
+        "id": 3511,
+        "page_url": "http://localhost:5173/about",
+        "visitor_id": "test",
+        "session_id": "test",
+        "timestamp": "2025-08-06T01:44:48.672Z",
+        "time_on_page": 15,
+        "referrer": "",
+        "user_agent": "Mozilla/5.0...",
+        "ip_address": "::1",
+        "event_name": null,
+        "event_data": null
+      }
+    ],
+    "pagination": {
+      "limit": 50,
+      "offset": 0,
+      "total": 1
+    }
+  }
+}
+```
+
+### 7. Calculate Daily Metrics (Admin)
+
+**POST** `/analytics/metrics/calculate`
+
+Calculate and store daily metrics for a specific date.
+
+**Request Body:**
+```json
+{
+  "date": "2025-08-06"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "metrics": {
+      "date": "2025-08-06",
+      "page_visits": 5,
+      "page_views": 8,
+      "unique_visitors": 2,
+      "avg_time_on_page": 12.5,
+      "bounce_rate": 0.4
+    },
+    "message": "Daily metrics calculated successfully"
+  }
+}
+```
+
+### 8. Generate IDs
+
+**GET** `/analytics/ids`
+
+Generate visitor and session IDs.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "visitor_id": "6bc4402a-5ad1-42de-b310-abb55e0be687",
+    "session_id": "6f7eec76-4466-4749-8d12-b5c26b843b59"
+  }
+}
+```
+
+## Error Responses
+
+All endpoints return consistent error responses:
+
+```json
+{
+  "error": {
+    "message": "Validation Error",
+    "details": [
+      {
+        "field": "page_url",
+        "message": "\"page_url\" must be a valid uri"
       }
     ]
   }
 }
 ```
 
-### Retrain Model
-Triggers model retraining with latest data.
+## CORS Configuration
 
-```http
-POST /api/predictions/retrain
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-```
-
-#### Request Body
-```json
-{
-  "force_retrain": false,
-  "use_latest_data": true
-}
-```
-
-#### Response
-```http
-HTTP/1.1 202 Accepted
-Content-Type: application/json
-
-{
-  "success": true,
-  "message": "Model retraining started",
-  "data": {
-    "job_id": "retrain_12345",
-    "estimated_duration": "30 minutes",
-    "status": "queued"
-  }
-}
-```
-
-## Recommendation Endpoints
-
-### Get Recommendations
-Retrieves actionable recommendations for website optimization.
-
-```http
-GET /api/recommendations?status=pending&priority=high
-Authorization: Bearer <jwt_token>
-```
-
-#### Query Parameters
-- `status` (optional): Filter by status (pending, implemented, dismissed)
-- `priority` (optional): Filter by priority (low, medium, high)
-- `type` (optional): Filter by type (content, performance, seo)
-
-#### Response
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "type": "content",
-      "title": "Optimize Homepage Content",
-      "description": "Homepage has high bounce rate. Consider adding more engaging content.",
-      "priority": "high",
-      "status": "pending",
-      "data": {
-        "current_bounce_rate": 0.45,
-        "target_bounce_rate": 0.30,
-        "affected_pages": ["/home"]
-      },
-      "created_at": "2025-08-05T10:00:00Z"
-    },
-    {
-      "id": 2,
-      "type": "performance",
-      "title": "Improve Page Load Speed",
-      "description": "About page takes 4.2s to load. Optimize images and scripts.",
-      "priority": "medium",
-      "status": "pending",
-      "data": {
-        "current_load_time": 4.2,
-        "target_load_time": 2.0,
-        "affected_pages": ["/about"]
-      },
-      "created_at": "2025-08-05T09:30:00Z"
-    }
-  ]
-}
-```
-
-### Update Recommendation Status
-Updates the status of a recommendation.
-
-```http
-PUT /api/recommendations/{id}/status
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-```
-
-#### Request Body
-```json
-{
-  "status": "implemented",
-  "notes": "Added more engaging content to homepage"
-}
-```
-
-#### Response
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "success": true,
-  "message": "Recommendation status updated",
-  "data": {
-    "id": 1,
-    "status": "implemented",
-    "updated_at": "2025-08-05T16:30:00Z"
-  }
-}
-```
-
-## Error Handling
-
-### Standard Error Response Format
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "code": "ERROR_CODE",
-  "details": {
-    "field": "Additional error details"
-  }
-}
-```
-
-### Common Error Codes
-- `VALIDATION_ERROR`: Input validation failed
-- `AUTHENTICATION_ERROR`: Invalid or missing authentication
-- `AUTHORIZATION_ERROR`: Insufficient permissions
-- `NOT_FOUND`: Resource not found
-- `RATE_LIMIT_EXCEEDED`: Rate limit exceeded
-- `INTERNAL_ERROR`: Server error
-
-### HTTP Status Codes
-- `200 OK`: Request successful
-- `201 Created`: Resource created successfully
-- `202 Accepted`: Request accepted for processing
-- `400 Bad Request`: Invalid request
-- `401 Unauthorized`: Authentication required
-- `403 Forbidden`: Insufficient permissions
-- `404 Not Found`: Resource not found
-- `429 Too Many Requests`: Rate limit exceeded
-- `500 Internal Server Error`: Server error
+The API supports CORS for the following origins:
+- `http://localhost:3000` (Original analytics frontend)
+- `http://localhost:5173` (Personal website)
+- Custom origins via `FRONTEND_URL` environment variable
 
 ## Rate Limiting
 
-### Rate Limit Headers
-```http
-X-RateLimit-Limit: 1000
-X-RateLimit-Remaining: 950
-X-RateLimit-Reset: 1640995200
+The API implements rate limiting to prevent abuse:
+- 100 requests per minute per IP address
+- 1000 requests per hour per IP address
+
+## Database Schema
+
+### page_visits Table
+```sql
+CREATE TABLE page_visits (
+  id SERIAL PRIMARY KEY,
+  page_url VARCHAR(500) NOT NULL,
+  visitor_id VARCHAR(100) NOT NULL,
+  session_id VARCHAR(100) NOT NULL,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  time_on_page INTEGER DEFAULT 0,
+  referrer VARCHAR(500),
+  user_agent TEXT,
+  ip_address INET,
+  event_name VARCHAR(100),
+  event_data JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
-### Rate Limit Exceeded Response
-```http
-HTTP/1.1 429 Too Many Requests
-Content-Type: application/json
-Retry-After: 60
-
-{
-  "success": false,
-  "error": "Rate limit exceeded",
-  "code": "RATE_LIMIT_EXCEEDED",
-  "retry_after": 60
-}
+### daily_metrics Table
+```sql
+CREATE TABLE daily_metrics (
+  id SERIAL PRIMARY KEY,
+  date DATE UNIQUE NOT NULL,
+  page_visits INTEGER DEFAULT 0,
+  page_views INTEGER DEFAULT 0,
+  avg_time_on_page DECIMAL(10,2) DEFAULT 0,
+  bounce_rate DECIMAL(5,4) DEFAULT 0,
+  unique_visitors INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
-## Pagination
+## Environment Variables
 
-### Pagination Headers
-```http
-X-Total-Count: 150
-X-Page: 1
-X-Per-Page: 10
-X-Total-Pages: 15
+```bash
+# Database
+DATABASE_URL=postgresql://username:password@localhost:5432/siteanalytics
+
+# Server
+PORT=3001
+NODE_ENV=development
+
+# CORS
+FRONTEND_URL=http://localhost:3000
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX_REQUESTS=100
 ```
 
-### Pagination Query Parameters
-- `page`: Page number (default: 1)
-- `limit`: Items per page (default: 10, max: 100)
+## Integration Examples
 
-## Webhooks
+### JavaScript/React Integration
 
-### Webhook Events
-- `page_visit.tracked`: New page visit recorded
-- `prediction.generated`: New predictions available
-- `recommendation.created`: New recommendation generated
-- `model.retrained`: Model retraining completed
+```javascript
+// Initialize analytics
+window.SiteAnalytics.init('http://localhost:3001', {
+  debug: true,
+  autoTrack: true
+});
 
-### Webhook Payload Example
-```json
-{
-  "event": "page_visit.tracked",
-  "timestamp": "2025-08-05T16:30:23Z",
-  "data": {
-    "page_url": "https://example.com/page",
-    "visitor_id": "visitor_123",
-    "session_id": "session_456"
-  }
-}
+// Track custom event
+window.SiteAnalytics.trackEvent('button_click', {
+  button_name: 'cta_button',
+  location: 'hero_section'
+});
+
+// Track page view
+window.SiteAnalytics.track({
+  page_title: 'Home Page',
+  custom_data: 'value'
+});
 ```
 
----
+### cURL Examples
 
-**Last Updated**: August 5, 2025  
-**Next Review**: August 12, 2025 
+```bash
+# Track page visit
+curl -X POST http://localhost:3001/api/analytics/track \
+  -H "Content-Type: application/json" \
+  -d '{
+    "page_url": "https://example.com",
+    "visitor_id": "visitor-123",
+    "session_id": "session-456",
+    "time_on_page": 30
+  }'
+
+# Track event
+curl -X POST http://localhost:3001/api/analytics/track \
+  -H "Content-Type: application/json" \
+  -d '{
+    "page_url": "https://example.com",
+    "visitor_id": "visitor-123",
+    "session_id": "session-456",
+    "event_name": "form_submit",
+    "event_data": {"form_type": "contact"}
+  }'
+
+# Get real-time metrics
+curl http://localhost:3001/api/analytics/metrics/realtime
+
+# Get daily metrics
+curl "http://localhost:3001/api/analytics/metrics/daily?days=7"
+``` 
