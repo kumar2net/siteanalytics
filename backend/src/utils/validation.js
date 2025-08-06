@@ -3,6 +3,7 @@ const Joi = require('joi');
 // Page visit tracking schema
 const pageVisitSchema = Joi.object({
   page_url: Joi.string().uri().required().max(500),
+  page_title: Joi.string().max(200).optional(),
   visitor_id: Joi.string().required().max(100),
   session_id: Joi.string().required().max(100),
   time_on_page: Joi.number().integer().min(0).max(86400).default(0), // Max 24 hours in seconds
@@ -24,7 +25,13 @@ const pageVisitSchema = Joi.object({
   browser_version: Joi.string().max(50).optional(),
   operating_system: Joi.string().max(100).optional(),
   os_version: Joi.string().max(50).optional(),
-  screen_resolution: Joi.string().max(20).optional()
+  screen_resolution: Joi.string().max(20).optional(),
+  // Additional fields from analytics tracker
+  screen_width: Joi.number().integer().min(0).optional(),
+  screen_height: Joi.number().integer().min(0).optional(),
+  language: Joi.string().max(10).optional(),
+  timezone: Joi.string().max(50).optional(),
+  timestamp: Joi.string().isoDate().optional()
 });
 
 // Analytics query schema
