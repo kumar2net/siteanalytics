@@ -2,6 +2,16 @@ const { pool } = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 
 class AnalyticsService {
+  // Generate visitor ID if not provided
+  generateVisitorId() {
+    return 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  // Generate session ID if not provided
+  generateSessionId() {
+    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
   // Track a page visit or event
   async trackPageVisit(data) {
     const { 
@@ -9,6 +19,10 @@ class AnalyticsService {
       event_name, event_data, country, region, city, latitude, longitude,
       device_type, browser, browser_version, operating_system, os_version, screen_resolution 
     } = data;
+    
+    // Ensure required fields are present
+    const finalVisitorId = visitor_id || this.generateVisitorId();
+    const finalSessionId = session_id || this.generateSessionId();
     
     const query = `
       INSERT INTO page_visits (
@@ -21,7 +35,7 @@ class AnalyticsService {
     `;
     
     const values = [
-      page_url, visitor_id, session_id, time_on_page, referrer, user_agent, ip_address, 
+      page_url, finalVisitorId, finalSessionId, time_on_page, referrer, user_agent, ip_address, 
       event_name || null, event_data || null, country || null, region || null, city || null, 
       latitude || null, longitude || null, device_type || null, browser || null, 
       browser_version || null, operating_system || null, os_version || null, screen_resolution || null
@@ -216,16 +230,6 @@ class AnalyticsService {
       console.error('Error getting top pages:', error);
       throw error;
     }
-  }
-
-  // Generate visitor ID if not provided
-  generateVisitorId() {
-    return uuidv4();
-  }
-
-  // Generate session ID
-  generateSessionId() {
-    return uuidv4();
   }
 
   // Get visitors by geolocation

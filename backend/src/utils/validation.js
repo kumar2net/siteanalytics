@@ -4,8 +4,8 @@ const Joi = require('joi');
 const pageVisitSchema = Joi.object({
   page_url: Joi.string().uri().required().max(500),
   page_title: Joi.string().max(200).optional(),
-  visitor_id: Joi.string().required().max(100),
-  session_id: Joi.string().required().max(100),
+  visitor_id: Joi.string().max(100).optional().default(() => 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
+  session_id: Joi.string().max(100).optional().default(() => 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
   time_on_page: Joi.number().integer().min(0).max(86400).default(0), // Max 24 hours in seconds
   referrer: Joi.string().uri().allow('').max(500).optional(),
   user_agent: Joi.string().max(1000).optional(),
