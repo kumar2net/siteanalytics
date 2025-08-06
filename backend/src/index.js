@@ -23,7 +23,7 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "https://kumarsite.netlify.app", "https://siteanalyticsak.netlify.app"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -37,9 +37,14 @@ app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:5173', // Personal website
-    'http://localhost:3000'  // Original analytics frontend
+    'http://localhost:3000',  // Original analytics frontend
+    'https://kumarsite.netlify.app', // Production personal website
+    'https://siteanalyticsak.netlify.app', // Production analytics frontend
+    'https://*.netlify.app' // Allow all Netlify subdomains
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Request parsing
