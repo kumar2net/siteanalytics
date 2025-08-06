@@ -9,6 +9,7 @@ const { errorHandler } = require('./middleware/errorHandler');
 const { rateLimiter } = require('./middleware/rateLimiter');
 const analyticsRoutes = require('./routes/analytics');
 const healthRoutes = require('./routes/health');
+const webhookRoutes = require('./routes/webhooks');
 const { initializeDatabase } = require('./config/database');
 
 const app = express();
@@ -66,6 +67,7 @@ app.use(rateLimiter);
 // Routes
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

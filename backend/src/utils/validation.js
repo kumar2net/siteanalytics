@@ -56,6 +56,21 @@ const predictionSchema = Joi.object({
   days_ahead: Joi.number().integer().min(1).max(30).default(7)
 });
 
+// Webhook schema
+const webhookSchema = Joi.object({
+  event_type: Joi.string().valid('page_view', 'event', 'session_start', 'high_traffic', 'error_rate', 'new_visitor', 'test').required(),
+  data: Joi.object().required(),
+  source: Joi.string().max(100).optional()
+});
+
+// Webhook registration schema
+const webhookRegistrationSchema = Joi.object({
+  url: Joi.string().uri().required(),
+  events: Joi.array().items(Joi.string()).min(1).required(),
+  secret: Joi.string().max(200).optional(),
+  description: Joi.string().max(500).optional()
+});
+
 // Validation middleware
 const validate = (schema) => {
   return (req, res, next) => {
@@ -105,6 +120,9 @@ module.exports = {
   analyticsQuerySchema,
   dailyMetricsSchema,
   predictionSchema,
+  webhookSchema,
+  webhookRegistrationSchema,
   validate,
-  validateQuery
+  validateQuery,
+  validateWebhook: validate(webhookSchema)
 }; 
